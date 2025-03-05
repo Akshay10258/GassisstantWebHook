@@ -6,8 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// var serviceAccount = require("path/to/serviceAccountKey.json");
-
 admin.initializeApp({
     credential: admin.credential.cert({
         project_id: process.env.FIREBASE_PROJECT_ID,
@@ -17,11 +15,17 @@ admin.initializeApp({
     databaseURL: "https://greenthumb-3c42c-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 
-
 const db = admin.database(); // Realtime Database
 
+// Updated CSP to be more permissive
 app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' https://gassisstant-web-hook.vercel.app; style-src 'self' 'unsafe-inline'; script-src 'self';");
+    res.setHeader("Content-Security-Policy", `
+        default-src 'self';
+        font-src 'self' https://gassisstant-web-hook.vercel.app;
+        style-src 'self' 'unsafe-inline';
+        script-src 'self';
+        connect-src 'self' https://gassisstant-web-hook.vercel.app;
+    `.replace(/\s+/g, ' ').trim());
     next();
 });
 

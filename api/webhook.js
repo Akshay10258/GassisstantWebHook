@@ -6,14 +6,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-var serviceAccount = require("path/to/serviceAccountKey.json");
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: "https://greenthumb-3c42c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    });
-}
+// var serviceAccount = require("path/to/serviceAccountKey.json");
+
+admin.initializeApp({
+    credential: admin.credential.cert({
+        project_id: process.env.FIREBASE_PROJECT_ID,
+        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),  // Fix newlines
+        client_email: process.env.FIREBASE_CLIENT_EMAIL
+    }),
+    databaseURL: "https://greenthumb-3c42c-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+
+
 const db = admin.database(); // Realtime Database
 
 app.post("/api/webhook", async (req, res) => {

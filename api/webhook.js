@@ -11,7 +11,7 @@ app.use(express.json());
 admin.initializeApp({
     credential: admin.credential.cert({
         project_id: process.env.FIREBASE_PROJECT_ID,
-        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),  // Fix newlines
+        private_key: process.env.FIREBASE_PRIVATE_KEY,
         client_email: process.env.FIREBASE_CLIENT_EMAIL
     }),
     databaseURL: "https://greenthumb-3c42c-default-rtdb.asia-southeast1.firebasedatabase.app"

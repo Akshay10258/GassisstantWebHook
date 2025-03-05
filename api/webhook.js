@@ -20,6 +20,13 @@ admin.initializeApp({
 
 const db = admin.database(); // Realtime Database
 
+app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' https://gassisstant-web-hook.vercel.app; style-src 'self' 'unsafe-inline'; script-src 'self';");
+    next();
+});
+
+app.use('/type-font', express.static(__dirname + '/fonts'));
+
 app.post("/api/webhook", async (req, res) => {
     const userQuery = req.body.queryResult?.queryText.toLowerCase() || "";
     console.log("Google Assistant Request:", userQuery);

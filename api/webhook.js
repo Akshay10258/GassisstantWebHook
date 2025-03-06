@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const admin = require("firebase-admin");
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -29,7 +30,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/type-font', express.static(__dirname + '/fonts'));
+app.use('/type-font', express.static(path.join(__dirname, '../fonts')));
 
 app.post("/api/webhook", async (req, res) => {
     const userQuery = req.body.queryResult?.queryText.toLowerCase() || "";

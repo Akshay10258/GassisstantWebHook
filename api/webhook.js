@@ -30,7 +30,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/type-font', express.static(path.join(__dirname, '../fonts')));
+app.use('/type-font', express.static(path.join(__dirname, '../public/fonts')));
+
 
 app.post("/api/webhook", async (req, res) => {
     const userQuery = req.body.queryResult?.queryText.toLowerCase() || "";

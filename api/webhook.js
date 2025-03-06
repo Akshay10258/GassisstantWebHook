@@ -2,6 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const admin = require("firebase-admin");
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,9 @@ admin.initializeApp({
 
 const db = admin.database();
 
+// Explicitly serve static files
+app.use('/type-font', express.static(path.join(__dirname, '../public/fonts')));
+
 // Apply CSP headers to all routes
 app.use((req, res, next) => {
     res.setHeader("Content-Security-Policy", 
@@ -28,6 +32,7 @@ app.use((req, res, next) => {
         "script-src 'self'; " + 
         "connect-src 'self' https://gassisstant-web-hook.vercel.app;"
     );
+    res.setHeader("Access-Control-Allow-Origin", "*");
     next();
 });
 
@@ -60,6 +65,16 @@ app.post("/api/webhook", async (req, res) => {
     }
 
     res.json({ fulfillmentText: "I'm not sure how to respond to that!" });
+});
+
+// Add a test GET endpoint to check if the server is working
+app.get("/api/webhook", (req, res) => {
+    res.json({ message: "Webhook API is operational" });
+});
+
+// Add a route to serve the font directly for testing
+app.get("/test-font", (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/fonts/Colfax-Medium.woff'));
 });
 
 module.exports = app;

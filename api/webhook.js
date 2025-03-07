@@ -40,32 +40,6 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get("/oauth/authorize", (req, res) => {
-    const { client_id, redirect_uri, state } = req.query;
-    const authCode = 'auth-' + Math.random().toString(36).substring(2);
-    authCodes.set(authCode, { client_id, redirect_uri });
-    res.redirect(`${redirect_uri}?code=${authCode}&state=${state}`);
-});
-
-// And similarly for the token endpoint
-app.post("/oauth/token", (req, res) => {
-    const { code, client_id, client_secret } = req.body;
-    const authData = authCodes.get(code);
-    if (authData && authData.client_id === client_id) {
-        const accessToken = 'access-' + Math.random().toString(36).substring(2);
-        const refreshToken = 'refresh-' + Math.random().toString(36).substring(2);
-        tokens.set(accessToken, { client_id });
-        res.json({
-            access_token: accessToken,
-            token_type: 'Bearer',
-            expires_in: 3600,
-            refresh_token: refreshToken
-        });
-        authCodes.delete(code);
-    } else {
-        res.status(400).json({ error: 'invalid_grant' });
-    }
-});
 
 // Main webhook route (handles Dialogflow and Smart Home)
 app.post("/api/webhook", async (req, res) => {
@@ -75,13 +49,13 @@ app.post("/api/webhook", async (req, res) => {
     // Handle Smart Home QUERY intent
     if (body.intent === 'action.devices.QUERY') {
         try {
-            const snapshot = await db.ref("moistureLevel").once("value");
-            const moistureLevel = snapshot.val() || 0;
+            const snapshot = await db.ref("monitor").once("value");
+            const monitorValue = snapshot.val() || 0;
 
-            let message = `The moisture level is ${moistureLevel}%. `;
-            if (moistureLevel > 60) {
+            let message = `The moisture level is ${monitorValue.SoilMoisture}%. `;
+            if (monitorValue.SoilMoisture > 60) {
                 message += "Your plants are well-watered!";
-            } else if (moistureLevel > 30) {
+            } else if (monitorValue.SoilMoisture > 30) {
                 message += "Your plants might need watering soon.";
             } else {
                 message += "Your plants are dry! Time to water them.";
@@ -132,13 +106,13 @@ app.post("/api/webhook", async (req, res) => {
 
     if (userQuery.includes("moisture level") || userQuery.includes("plants watered")) {
         try {
-            const snapshot = await db.ref("moistureLevel").once("value");
-            const moistureLevel = snapshot.val() || 0;
+            const snapshot = await db.ref("SoilMoisture").once("value");
+            const SoilMoisture = snapshot.val() || 0;
 
-            let message = `The moisture level is ${moistureLevel}%. `;
-            if (moistureLevel > 60) {
+            let message = `The moisture level is ${SoilMoisture}%. `;
+            if (SoilMoisture > 60) {
                 message += "Your plants are well-watered! 🌱";
-            } else if (moistureLevel > 30) {
+            } else if (SoilMoisture > 30) {
                 message += "Your plants might need watering soon. 💦";
             } else {
                 message += "Your plants are dry! Time to water them. 🚰";

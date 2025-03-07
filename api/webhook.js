@@ -116,15 +116,16 @@ app.post("/api/webhook", async (req, res) => {
                         garden: {
                             status: "SUCCESS",
                             online: true,
-                            states: {  // Use "states" instead of "state"
+                            states: {
                                 SensorState: {
                                     MoistureLevel: {
                                         currentSensorState: descriptiveState,
                                         rawValue: moisture
                                     }
                                 },
-                                online: true // Add online state
-                            }
+                                online: true
+                            },
+                            "defaultResponse": statusMessage // add to the states to see if Google Assistant will tell message
                         }
                     }
                 }

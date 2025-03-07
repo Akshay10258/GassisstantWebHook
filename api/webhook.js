@@ -40,11 +40,31 @@ app.use((req, res, next) => {
     next();
 });
 
-
 // Main webhook route (handles Dialogflow and Smart Home)
 app.post("/api/webhook", async (req, res) => {
     const body = req.body;
     console.log("Request Body:", JSON.stringify(body));
+
+    // Handle Smart Home SYNC intent
+    if (body.intent === 'action.devices.SYNC') {
+        return res.json({
+            requestId: body.requestId,
+            payload: {
+                agentUserId: "user123", // Unique per user, static for testing
+                devices: [{
+                    id: "garden",
+                    type: "action.devices.types.SENSOR",
+                    traits: ["action.devices.traits.StatusReport"],
+                    name: {
+                        name: "Garden",
+                        defaultNames: ["Garden Monitor"],
+                        nicknames: ["My Garden"]
+                    },
+                    willReportState: false // No real-time updates
+                }]
+            }
+        });
+    }
 
     // Handle Smart Home QUERY intent
     if (body.intent === 'action.devices.QUERY') {
@@ -52,7 +72,7 @@ app.post("/api/webhook", async (req, res) => {
             const snapshot = await db.ref("monitor").once("value");
             const monitorValue = snapshot.val() || 0;
 
-            console.log("Enetred the query intent .. ..d..f.f.f.");
+            console.log("Entered the query intent .. ..d..f.f.f.");
             let message = `The moisture level is ${monitorValue.SoilMoisture}%. `;
             if (monitorValue.SoilMoisture > 60) {
                 message += "Your plants are well-watered!";

@@ -40,17 +40,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// OAuth Authorization Endpoint
-app.get("/oauth/authorize", (req, res) => {
+app.get("/api/webhook/oauth/authorize", (req, res) => {
     const { client_id, redirect_uri, state } = req.query;
-    // For testing: Auto-approve, no UI
     const authCode = 'auth-' + Math.random().toString(36).substring(2);
     authCodes.set(authCode, { client_id, redirect_uri });
     res.redirect(`${redirect_uri}?code=${authCode}&state=${state}`);
 });
 
-// OAuth Token Endpoint
-app.post("/oauth/token", (req, res) => {
+app.post("/api/webhook/oauth/token", (req, res) => {
     const { code, client_id, client_secret } = req.body;
     const authData = authCodes.get(code);
     if (authData && authData.client_id === client_id) {
@@ -63,7 +60,7 @@ app.post("/oauth/token", (req, res) => {
             expires_in: 3600,
             refresh_token: refreshToken
         });
-        authCodes.delete(code); // One-time use
+        authCodes.delete(code);
     } else {
         res.status(400).json({ error: 'invalid_grant' });
     }

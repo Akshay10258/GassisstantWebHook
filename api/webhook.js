@@ -48,20 +48,24 @@ app.post("/api/webhook", async (req, res) => {
     // Handle Smart Home SYNC intent
     if (body.inputs && body.inputs[0].intent === 'action.devices.SYNC') {
         console.log("Handling SYNC intent");
+       // In your SYNC response
         return res.json({
             requestId: body.requestId,
             payload: {
                 agentUserId: "user123",
                 devices: [{
                     id: "garden",
-                    type: "action.devices.types.SENSOR",
-                    traits: ["action.devices.traits.SensorState"],
+                    type: "action.devices.types.GARDEN",  // Changed from SENSOR to a more specific type
+                    traits: [
+                        "action.devices.traits.SensorState", 
+                        "action.devices.traits.StatusReport"  // Add this trait to enable verbal responses
+                    ],
                     name: {
                         name: "Garden",
                         defaultNames: ["Garden Monitor"],
-                        nicknames: ["My Garden"]
+                        nicknames: ["My Garden", "Balcony Garden"]
                     },
-                    willReportState: true,  // Changed to true to enable state reporting
+                    willReportState: true,
                     attributes: {
                         sensorStatesSupported: [{
                             name: "MoistureLevel",
@@ -75,39 +79,38 @@ app.post("/api/webhook", async (req, res) => {
                             numericCapabilities: {
                                 rawValueUnit: "PERCENTAGE"
                             }
-                        }]
+                        }],
+                        // Add this to enable status reports
+                        statusReportSupported: true
                     }
                 }]
             }
-        });
+    });
     }
 
-    // Handle Smart Home QUERY intent
+        // Handle Smart Home QUERY intent
     if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
         try {
             const snapshot = await db.ref("monitor").once("value");
             const monitorValue = snapshot.val() || { SoilMoisture: 0 };
             const moisture = monitorValue.SoilMoisture || 0;
-    
+
             console.log("Handling QUERY intent");
             console.log("Monitor value:", monitorValue);
             
             let descriptiveState;
-            let speechText;
             
             if (moisture > 60) {
                 descriptiveState = "well-watered";
-                speechText = `The garden moisture level is ${moisture}%. Your plants are well-watered!`;
             } else if (moisture > 30) {
                 descriptiveState = "needs watering";
-                speechText = `The garden moisture level is ${moisture}%. Your plants might need watering soon.`;
             } else {
                 descriptiveState = "dry";
-                speechText = `The garden moisture level is ${moisture}%. Your plants are dry! Time to water them.`;
             }
             
-            console.log("Descriptive state:", descriptiveState);
-            console.log("Speech response:", speechText);
+            // Create a verbal status message
+            const statusMessage = `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`;
+            console.log("Status message:", statusMessage);
             
             return res.json({
                 requestId: body.requestId,
@@ -124,10 +127,21 @@ app.post("/api/webhook", async (req, res) => {
                                     }
                                 }
                             },
-                            // Add customData with speech response
-                            customData: {
-                                speechText: speechText
-                            }
+                            // The key part: add status with verbal response
+                            statusReport: [{
+                                blocking: false,
+                                priority: 0,
+                                statusCode: "urn:statusReport:deviceStatus",
+                                deviceTarget: "garden",
+                                userNotification: {
+                                    title: "Garden Moisture Status",
+                                    text: statusMessage
+                                }
+                            }],
+                            // This field helps Google Assistant know what to say
+                            errorCode: null,
+                            status: "SUCCESS",
+                            debugString: statusMessage
                         }
                     }
                 }
@@ -146,21 +160,6 @@ app.post("/api/webhook", async (req, res) => {
                 }
             });
         }
-    }
-
-    // Handle Smart Home EXECUTE intent (if you want to support actions)
-    if (body.inputs && body.inputs[0].intent === 'action.devices.EXECUTE') {
-        console.log("Handling EXECUTE intent");
-        return res.json({
-            requestId: body.requestId,
-            payload: {
-                commands: [{
-                    ids: ["garden"],
-                    status: "SUCCESS",
-                    states: {},
-                }]
-            }
-        });
     }
 
     // Handle Dialogflow request

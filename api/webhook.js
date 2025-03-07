@@ -125,12 +125,12 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
                     }
                 }
             },
-            followUp: {
-                speech: {
+            structuredResponse: {
+                voice: {
                     text: `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`
                 }
             }
-        };        
+        };      
         
         
         console.log("Sending response:", JSON.stringify(response, null, 2));

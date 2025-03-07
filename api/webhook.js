@@ -54,7 +54,7 @@ app.post("/api/webhook", async (req, res) => {
                 agentUserId: "user123",
                 devices: [{
                     id: "garden",
-                    type: "action.devices.types.SENSOR", // Keep as SENSOR
+                    type: "action.devices.types.SENSOR",
                     traits: ["action.devices.traits.SensorState"],
                     name: {
                         name: "Garden",
@@ -65,15 +65,10 @@ app.post("/api/webhook", async (req, res) => {
                     attributes: {
                         sensorStatesSupported: [{
                             name: "MoistureLevel",
-                            descriptiveCapabilities: {
-                                availableStates: [
-                                    "dry",
-                                    "needs watering",
-                                    "well-watered"
-                                ]
-                            },
                             numericCapabilities: {
-                                rawValueUnit: "PERCENTAGE"
+                                rawValueUnit: "PERCENTAGE",
+                                minValue: 0,
+                                maxValue: 100
                             }
                         }]
                     },
@@ -82,14 +77,12 @@ app.post("/api/webhook", async (req, res) => {
                         model: "GardenMonitorV1",
                         hwVersion: "1.0",
                         swVersion: "1.0.1"
-                    },
-                    customData: {
-                        customKey: "customValue"
                     }
                 }]
             }
         });
     }
+    
     
 
 // Handle Smart Home QUERY intent
@@ -125,38 +118,19 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
                         status: "SUCCESS",
                         online: true,
                         state: {
-                            "SensorState": {
-                                "MoistureLevel": {
-                                    "currentSensorState": descriptiveState,
-                                    "rawValue": moisture
+                            SensorState: {
+                                MoistureLevel: {
+                                    currentSensorState: descriptiveState,
+                                    rawValue: moisture
                                 }
                             }
                         }
                     }
                 }
             },
-            structuredResponse: {
+            followUp: {  // Preferred for spoken responses
                 speech: {
                     text: `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`
-                }
-            },
-            // Optional: Ensures Google Home UI updates with the latest moisture level
-            reportStateAndNotification: {
-                requestId: body.requestId,
-                eventId: new Date().toISOString(),
-                payload: {
-                    devices: {
-                        states: {
-                            garden: {
-                                SensorState: {
-                                    MoistureLevel: {
-                                        currentSensorState: descriptiveState,
-                                        rawValue: moisture
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         };

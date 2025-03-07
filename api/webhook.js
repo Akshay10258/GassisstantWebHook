@@ -97,7 +97,27 @@ app.post("/api/webhook", async (req, res) => {
             if (moisture > 60) descriptiveState = "well-watered";
             else if (moisture > 30) descriptiveState = "needs watering";
             else descriptiveState = "dry";
-    
+            
+
+            console.log("ide response : ",{
+                requestId: body.requestId,
+                payload: {
+                    devices: {
+                        garden: {
+                            status: "SUCCESS",
+                            online: true,
+                            state: {
+                                "SensorState": {
+                                    "MoistureLevel": {
+                                        "currentSensorState": descriptiveState,
+                                        "rawValue": moisture
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            })
             return res.json({
                 requestId: body.requestId,
                 payload: {

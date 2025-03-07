@@ -6,7 +6,7 @@ const path = require("path");
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // Fixed parenthesis mismatch here
 
 // Initialize Firebase
 admin.initializeApp({
@@ -83,7 +83,6 @@ app.post("/api/webhook", async (req, res) => {
         });
     }
 
-
     // Handle Smart Home QUERY intent
     if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
         try {
@@ -125,19 +124,12 @@ app.post("/api/webhook", async (req, res) => {
                                 },
                                 online: true
                             },
-                            "defaultResponse": statusMessage // add to the states to see if Google Assistant will tell message
+                            "defaultResponse": statusMessage,
+                            "fulfillmentText" : statusMessage // add the fullfilment text to test.
                         }
                     }
                 }
             };
-            const speechResponse = {
-                requestId: body.requestId,
-                payload: {
-                    agentUserId: "user123",
-                    fulfillmentText: statusMessage
-                }
-            };
-
 
             console.log("Sending response:", JSON.stringify(response, null, 2));
             return res.json(response);
@@ -156,7 +148,6 @@ app.post("/api/webhook", async (req, res) => {
             });
         }
     }
-
     // Handle Dialogflow request
     if (req.body.queryResult) {
         const userQuery = req.body.queryResult.queryText?.toLowerCase() || "";

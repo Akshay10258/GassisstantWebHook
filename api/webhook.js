@@ -48,21 +48,36 @@ app.post("/api/webhook", async (req, res) => {
     // Handle Smart Home SYNC intent
     // Request Body: {"inputs":[{"intent":"action.devices.SYNC"}],"requestId":"9348263211220627597"}
     if (body.inputs[0].intent === 'action.devices.SYNC') {
-        console.log("entered sync intent ...g.g.g")
+        console.log("entered sync intent ...g.g.g");
         return res.json({
             requestId: body.requestId,
             payload: {
-                agentUserId: "user123", // Unique per user, static for testing
+                agentUserId: "user123",
                 devices: [{
                     id: "garden",
                     type: "action.devices.types.SENSOR",
-                    traits: ["action.devices.traits.StatusReport"],
+                    traits: ["action.devices.traits.SensorState"],
                     name: {
                         name: "Garden",
                         defaultNames: ["Garden Monitor"],
                         nicknames: ["My Garden"]
                     },
-                    willReportState: false // No real-time updates
+                    willReportState: false,
+                    attributes: {
+                        sensorStatesSupported: [{
+                            name: "MoistureLevel",
+                            descriptiveCapabilities: {
+                                availableStates: [
+                                    "dry",
+                                    "needs watering",
+                                    "well-watered"
+                                ]
+                            },
+                            numericCapabilities: {
+                                rawValueUnit: "PERCENTAGE"
+                            }
+                        }]
+                    }
                 }]
             }
         });
@@ -72,19 +87,17 @@ app.post("/api/webhook", async (req, res) => {
     if (body.inputs[0].intent === 'action.devices.QUERY') {
         try {
             const snapshot = await db.ref("monitor").once("value");
-            const monitorValue = snapshot.val() || 0;
-
+            const monitorValue = snapshot.val() || { SoilMoisture: 0 };
+            const moisture = monitorValue.SoilMoisture || 0;
+    
             console.log("Entered the query intent .. ..d..f.f.f.");
-            console.log("Mon value",monitorValue);
-            let message = `The moisture level is ${monitorValue.SoilMoisture}%. `;
-            if (monitorValue.SoilMoisture > 60) {
-                message += "Your plants are well-watered!";
-            } else if (monitorValue.SoilMoisture > 30) {
-                message += "Your plants might need watering soon.";
-            } else {
-                message += "Your plants are dry! Time to water them.";
-            }
-
+            console.log("Mon value", monitorValue);
+            
+            let descriptiveState;
+            if (moisture > 60) descriptiveState = "well-watered";
+            else if (moisture > 30) descriptiveState = "needs watering";
+            else descriptiveState = "dry";
+    
             return res.json({
                 requestId: body.requestId,
                 payload: {
@@ -92,12 +105,14 @@ app.post("/api/webhook", async (req, res) => {
                         garden: {
                             status: "SUCCESS",
                             online: true,
-                            currentStatusReport: [
-                                {
-                                    statusCode: "SUCCESS",
-                                    description: message
+                            state: {
+                                "SensorState": {
+                                    "MoistureLevel": {
+                                        "currentSensorState": descriptiveState,
+                                        "rawValue": moisture
+                                    }
                                 }
-                            ]
+                            }
                         }
                     }
                 }
@@ -110,13 +125,7 @@ app.post("/api/webhook", async (req, res) => {
                     devices: {
                         garden: {
                             status: "ERROR",
-                            errorCode: "deviceOffline",
-                            currentStatusReport: [
-                                {
-                                    statusCode: "ERROR",
-                                    description: "I couldn't retrieve the moisture level. Try again later!"
-                                }
-                            ]
+                            errorCode: "deviceOffline"
                         }
                     }
                 }

@@ -46,8 +46,9 @@ app.post("/api/webhook", async (req, res) => {
     console.log("Request Body:", JSON.stringify(body));
 
     // Handle Smart Home SYNC intent
-    if (body.intent === 'action.devices.SYNC') {
-        console.log("entered sync intent")
+    // Request Body: {"inputs":[{"intent":"action.devices.SYNC"}],"requestId":"9348263211220627597"}
+    if (body.inputs[0].intent === 'action.devices.SYNC') {
+        console.log("entered sync intent ...g.g.g")
         return res.json({
             requestId: body.requestId,
             payload: {

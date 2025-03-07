@@ -52,6 +52,7 @@ app.post("/api/webhook", async (req, res) => {
             const snapshot = await db.ref("monitor").once("value");
             const monitorValue = snapshot.val() || 0;
 
+            console.log("Enetred the query intent .. ..d..f.f.f.");
             let message = `The moisture level is ${monitorValue.SoilMoisture}%. `;
             if (monitorValue.SoilMoisture > 60) {
                 message += "Your plants are well-watered!";

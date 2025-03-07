@@ -6,7 +6,7 @@ const path = require("path");
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // For OAuth token endpoint
+app.use(express.urlencoded({ extended: true }));
 
 // Initialize Firebase
 admin.initializeApp({
@@ -46,9 +46,8 @@ app.post("/api/webhook", async (req, res) => {
     console.log("Request Body:", JSON.stringify(body));
 
     // Handle Smart Home SYNC intent
-    // Request Body: {"inputs":[{"intent":"action.devices.SYNC"}],"requestId":"9348263211220627597"}
-    if (body.inputs[0].intent === 'action.devices.SYNC') {
-        console.log("entered sync intent ...g.g.g");
+    if (body.inputs && body.inputs[0].intent === 'action.devices.SYNC') {
+        console.log("Handling SYNC intent");
         return res.json({
             requestId: body.requestId,
             payload: {
@@ -62,7 +61,7 @@ app.post("/api/webhook", async (req, res) => {
                         defaultNames: ["Garden Monitor"],
                         nicknames: ["My Garden"]
                     },
-                    willReportState: false,
+                    willReportState: true,  // Changed to true to enable state reporting
                     attributes: {
                         sensorStatesSupported: [{
                             name: "MoistureLevel",
@@ -84,32 +83,32 @@ app.post("/api/webhook", async (req, res) => {
     }
 
     // Handle Smart Home QUERY intent
-    if (body.inputs[0].intent === 'action.devices.QUERY') {
+    if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
         try {
             const snapshot = await db.ref("monitor").once("value");
             const monitorValue = snapshot.val() || { SoilMoisture: 0 };
             const moisture = monitorValue.SoilMoisture || 0;
     
-            console.log("Entered the query intent .. ..d..f.f.f.");
-            console.log("Mon value", monitorValue);
+            console.log("Handling QUERY intent");
+            console.log("Monitor value:", monitorValue);
             
             let descriptiveState;
-            if (moisture > 60) descriptiveState = "well-watered";
-            else if (moisture > 30) descriptiveState = "needs watering";
-            else descriptiveState = "dry";
+            let speechText;
             
-
-            console.log("dstate ",descriptiveState)
-            console.log("ide response : ", {
-                state: {
-                    "SensorState": {
-                        "MoistureLevel": {
-                            "currentSensorState": descriptiveState,
-                            "rawValue": moisture
-                        }
-                    }
-                }
-            })
+            if (moisture > 60) {
+                descriptiveState = "well-watered";
+                speechText = `The garden moisture level is ${moisture}%. Your plants are well-watered!`;
+            } else if (moisture > 30) {
+                descriptiveState = "needs watering";
+                speechText = `The garden moisture level is ${moisture}%. Your plants might need watering soon.`;
+            } else {
+                descriptiveState = "dry";
+                speechText = `The garden moisture level is ${moisture}%. Your plants are dry! Time to water them.`;
+            }
+            
+            console.log("Descriptive state:", descriptiveState);
+            console.log("Speech response:", speechText);
+            
             return res.json({
                 requestId: body.requestId,
                 payload: {
@@ -124,6 +123,10 @@ app.post("/api/webhook", async (req, res) => {
                                         "rawValue": moisture
                                     }
                                 }
+                            },
+                            // Add customData with speech response
+                            customData: {
+                                speechText: speechText
                             }
                         }
                     }
@@ -145,32 +148,75 @@ app.post("/api/webhook", async (req, res) => {
         }
     }
 
-    // Handle Dialogflow request (existing logic)
-    const userQuery = req.body.queryResult?.queryText?.toLowerCase() || "";
-    console.log("Google Assistant Request:", userQuery);
-
-    if (userQuery.includes("moisture level") || userQuery.includes("plants watered")) {
-        try {
-            const snapshot = await db.ref("SoilMoisture").once("value");
-            const SoilMoisture = snapshot.val() || 0;
-
-            let message = `The moisture level is ${SoilMoisture}%. `;
-            if (SoilMoisture > 60) {
-                message += "Your plants are well-watered! 🌱";
-            } else if (SoilMoisture > 30) {
-                message += "Your plants might need watering soon. 💦";
-            } else {
-                message += "Your plants are dry! Time to water them. 🚰";
+    // Handle Smart Home EXECUTE intent (if you want to support actions)
+    if (body.inputs && body.inputs[0].intent === 'action.devices.EXECUTE') {
+        console.log("Handling EXECUTE intent");
+        return res.json({
+            requestId: body.requestId,
+            payload: {
+                commands: [{
+                    ids: ["garden"],
+                    status: "SUCCESS",
+                    states: {},
+                }]
             }
-
-            return res.json({ fulfillmentText: message });
-        } catch (error) {
-            console.error("Error fetching moisture level:", error);
-            return res.json({ fulfillmentText: "I couldn't retrieve the moisture level. Try again later!" });
-        }
+        });
     }
 
-    res.json({ fulfillmentText: "I'm not sure how to respond to that!" });
+    // Handle Dialogflow request
+    if (req.body.queryResult) {
+        const userQuery = req.body.queryResult.queryText?.toLowerCase() || "";
+        console.log("Dialogflow Request:", userQuery);
+
+        if (userQuery.includes("moisture level") || userQuery.includes("plants watered")) {
+            try {
+                // First try the monitor path
+                let snapshot = await db.ref("monitor").once("value");
+                let moistureData = snapshot.val();
+                
+                // If not found, try the direct SoilMoisture path
+                if (!moistureData || !moistureData.SoilMoisture) {
+                    snapshot = await db.ref("SoilMoisture").once("value");
+                    let directValue = snapshot.val();
+                    moistureData = { SoilMoisture: directValue || 0 };
+                }
+                
+                const moisture = moistureData.SoilMoisture || 0;
+
+                let message = `The moisture level is ${moisture}%. `;
+                if (moisture > 60) {
+                    message += "Your plants are well-watered! 🌱";
+                } else if (moisture > 30) {
+                    message += "Your plants might need watering soon. 💦";
+                } else {
+                    message += "Your plants are dry! Time to water them. 🚰";
+                }
+
+                return res.json({
+                    fulfillmentText: message,
+                    fulfillmentMessages: [
+                        {
+                            text: {
+                                text: [message]
+                            }
+                        }
+                    ]
+                });
+            } catch (error) {
+                console.error("Error fetching moisture level:", error);
+                return res.json({ 
+                    fulfillmentText: "I couldn't retrieve the moisture level. Try again later!" 
+                });
+            }
+        }
+
+        return res.json({ 
+            fulfillmentText: "I'm not sure how to respond to that!" 
+        });
+    }
+
+    // If it's neither a Smart Home nor a Dialogflow request
+    res.json({ error: "Unrecognized request format" });
 });
 
 // Test GET endpoint

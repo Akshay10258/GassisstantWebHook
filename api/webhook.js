@@ -29,11 +29,11 @@ app.use('/type-font', express.static(path.join(__dirname, '../public/fonts')));
 
 // Apply CSP headers to all routes
 app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", 
-        "default-src 'self'; " + 
+    res.setHeader("Content-Security-Policy",
+        "default-src 'self'; " +
         "font-src 'self' https://gassisstant-web-hook.vercel.app; " +
         "style-src 'self' 'unsafe-inline'; " +
-        "script-src 'self'; " + 
+        "script-src 'self'; " +
         "connect-src 'self' https://gassisstant-web-hook.vercel.app;"
     );
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -82,77 +82,79 @@ app.post("/api/webhook", async (req, res) => {
             }
         });
     }
-    
-    
 
-// Handle Smart Home QUERY intent
-if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
-    try {
-        console.log("Full QUERY request:", JSON.stringify(body, null, 2));
-        const snapshot = await db.ref("monitor").once("value");
-        const monitorValue = snapshot.val() || { SoilMoisture: 0 };
-        const moisture = monitorValue.SoilMoisture || 0;
 
-        console.log("Handling QUERY intent");
-        console.log("Monitor value:", monitorValue);
-        
-        let descriptiveState;
-        
-        if (moisture > 60) {
-            descriptiveState = "well-watered";
-        } else if (moisture > 30) {
-            descriptiveState = "needs watering";
-        } else {
-            descriptiveState = "dry";
-        }
-        
-        // Create a verbal status message
-        const statusMessage = `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`;
-        console.log("Status message:", statusMessage);
-        
-        const response = {
-            requestId: body.requestId,
-            payload: {
-                devices: {
-                    garden: {
-                        status: "SUCCESS",
-                        online: true,
-                        state: {
-                            SensorState: {
-                                MoistureLevel: {
-                                    currentSensorState: descriptiveState,
-                                    rawValue: moisture
-                                }
+    // Handle Smart Home QUERY intent
+    if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
+        try {
+            console.log("Full QUERY request:", JSON.stringify(body, null, 2));
+            const snapshot = await db.ref("monitor").once("value");
+            const monitorValue = snapshot.val() || { SoilMoisture: 0 };
+            const moisture = monitorValue.SoilMoisture || 0;
+
+            console.log("Handling QUERY intent");
+            console.log("Monitor value:", monitorValue);
+
+            let descriptiveState;
+
+            if (moisture > 60) {
+                descriptiveState = "well-watered";
+            } else if (moisture > 30) {
+                descriptiveState = "needs watering";
+            } else {
+                descriptiveState = "dry";
+            }
+
+            // Create a verbal status message
+            const statusMessage = `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`;
+            console.log("Status message:", statusMessage);
+
+            const response = {
+                requestId: body.requestId,
+                payload: {
+                    devices: {
+                        garden: {
+                            status: "SUCCESS",
+                            online: true,
+                            states: {  // Use "states" instead of "state"
+                                SensorState: {
+                                    MoistureLevel: {
+                                        currentSensorState: descriptiveState,
+                                        rawValue: moisture
+                                    }
+                                },
+                                online: true // Add online state
                             }
                         }
                     }
                 }
-            },
-            followUp: {  // Preferred for spoken responses
-                speech: {
-                    text: `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`
+            };
+            const speechResponse = {
+                requestId: body.requestId,
+                payload: {
+                    agentUserId: "user123",
+                    fulfillmentText: statusMessage
                 }
-            }
-        };
-        
-        
-        console.log("Sending response:", JSON.stringify(response, null, 2));
-        return res.json(response);
-    } catch (error) {
-        console.error("Error fetching moisture level:", error);
-        return res.json({
-            requestId: body.requestId,
-            payload: {
-                devices: {
-                    garden: {
-                        status: "ERROR",
-                        errorCode: "deviceOffline"
+            };
+
+
+            console.log("Sending response:", JSON.stringify(response, null, 2));
+            return res.json(response);
+        } catch (error) {
+            console.error("Error fetching moisture level:", error);
+            return res.json({
+                requestId: body.requestId,
+                payload: {
+                    devices: {
+                        garden: {
+                            status: "ERROR",
+                            errorCode: "deviceOffline"
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
-}
 
     // Handle Dialogflow request
     if (req.body.queryResult) {
@@ -164,14 +166,14 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
                 // First try the monitor path
                 let snapshot = await db.ref("monitor").once("value");
                 let moistureData = snapshot.val();
-                
+
                 // If not found, try the direct SoilMoisture path
                 if (!moistureData || !moistureData.SoilMoisture) {
                     snapshot = await db.ref("SoilMoisture").once("value");
                     let directValue = snapshot.val();
                     moistureData = { SoilMoisture: directValue || 0 };
                 }
-                
+
                 const moisture = moistureData.SoilMoisture || 0;
 
                 let message = `The moisture level is ${moisture}%. `;
@@ -195,14 +197,14 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
                 });
             } catch (error) {
                 console.error("Error fetching moisture level:", error);
-                return res.json({ 
-                    fulfillmentText: "I couldn't retrieve the moisture level. Try again later!" 
+                return res.json({
+                    fulfillmentText: "I couldn't retrieve the moisture level. Try again later!"
                 });
             }
         }
 
-        return res.json({ 
-            fulfillmentText: "I'm not sure how to respond to that!" 
+        return res.json({
+            fulfillmentText: "I'm not sure how to respond to that!"
         });
     }
 

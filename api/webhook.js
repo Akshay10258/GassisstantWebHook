@@ -69,12 +69,13 @@ app.post("/api/webhook", async (req, res) => {
     }
 
     // Handle Smart Home QUERY intent
-    if (body.intent === 'action.devices.QUERY') {
+    if (body.inputs[0].intent === 'action.devices.QUERY') {
         try {
             const snapshot = await db.ref("monitor").once("value");
             const monitorValue = snapshot.val() || 0;
 
             console.log("Entered the query intent .. ..d..f.f.f.");
+            console.log("Mon value",monitorValue);
             let message = `The moisture level is ${monitorValue.SoilMoisture}%. `;
             if (monitorValue.SoilMoisture > 60) {
                 message += "Your plants are well-watered!";

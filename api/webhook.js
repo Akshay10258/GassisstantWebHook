@@ -122,17 +122,17 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
                                     "rawValue": moisture
                                 }
                             }
-                        },
-                        // Add these fields for verbal response
-                        ttsMessage: statusMessage,  // Try this field
-                        speakableName: "Garden", 
-                        customData: {
-                            speechText: statusMessage
                         }
                     }
                 }
+            },
+            // ✅ Add a notification for verbal response
+            notification: {
+                title: "Garden Moisture Update",
+                text: `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`
             }
         };
+        
         
         console.log("Sending response:", JSON.stringify(response, null, 2));
         return res.json(response);

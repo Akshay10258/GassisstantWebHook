@@ -40,14 +40,15 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get("/api/webhook/oauth/authorize", (req, res) => {
+app.get("/oauth/authorize", (req, res) => {
     const { client_id, redirect_uri, state } = req.query;
     const authCode = 'auth-' + Math.random().toString(36).substring(2);
     authCodes.set(authCode, { client_id, redirect_uri });
     res.redirect(`${redirect_uri}?code=${authCode}&state=${state}`);
 });
 
-app.post("/api/webhook/oauth/token", (req, res) => {
+// And similarly for the token endpoint
+app.post("/oauth/token", (req, res) => {
     const { code, client_id, client_secret } = req.body;
     const authData = authCodes.get(code);
     if (authData && authData.client_id === client_id) {

@@ -107,7 +107,6 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
         const statusMessage = `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`;
         console.log("Status message:", statusMessage);
         
-        // For speech response
         const response = {
             requestId: body.requestId,
             payload: {
@@ -126,12 +125,12 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
                     }
                 }
             },
-            // ✅ Add a notification for verbal response
-            notification: {
-                title: "Garden Moisture Update",
-                text: `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`
+            followUp: {
+                speech: {
+                    text: `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`
+                }
             }
-        };
+        };        
         
         
         console.log("Sending response:", JSON.stringify(response, null, 2));

@@ -46,41 +46,51 @@ app.post("/api/webhook", async (req, res) => {
     console.log("Request Body:", JSON.stringify(body));
 
     // Handle Smart Home SYNC intent
-if (body.inputs && body.inputs[0].intent === 'action.devices.SYNC') {
-    console.log("Handling SYNC intent");
-    return res.json({
-        requestId: body.requestId,
-        payload: {
-            agentUserId: "user123",
-            devices: [{
-                id: "garden",
-                type: "action.devices.types.SENSOR", // Keep as SENSOR since it worked before
-                traits: ["action.devices.traits.SensorState"],
-                name: {
-                    name: "Garden",
-                    defaultNames: ["Garden Monitor"],
-                    nicknames: ["My Garden"]
-                },
-                willReportState: true,
-                attributes: {
-                    sensorStatesSupported: [{
-                        name: "MoistureLevel",
-                        descriptiveCapabilities: {
-                            availableStates: [
-                                "dry",
-                                "needs watering",
-                                "well-watered"
-                            ]
-                        },
-                        numericCapabilities: {
-                            rawValueUnit: "PERCENTAGE"
-                        }
-                    }]
-                }
-            }]
-        }
-    });
-}
+    if (body.inputs && body.inputs[0].intent === 'action.devices.SYNC') {
+        console.log("Handling SYNC intent");
+        return res.json({
+            requestId: body.requestId,
+            payload: {
+                agentUserId: "user123",
+                devices: [{
+                    id: "garden",
+                    type: "action.devices.types.SENSOR", // Keep as SENSOR
+                    traits: ["action.devices.traits.SensorState"],
+                    name: {
+                        name: "Garden",
+                        defaultNames: ["Garden Monitor"],
+                        nicknames: ["My Garden"]
+                    },
+                    willReportState: true,
+                    attributes: {
+                        sensorStatesSupported: [{
+                            name: "MoistureLevel",
+                            descriptiveCapabilities: {
+                                availableStates: [
+                                    "dry",
+                                    "needs watering",
+                                    "well-watered"
+                                ]
+                            },
+                            numericCapabilities: {
+                                rawValueUnit: "PERCENTAGE"
+                            }
+                        }]
+                    },
+                    deviceInfo: {
+                        manufacturer: "YourCompany",
+                        model: "GardenMonitorV1",
+                        hwVersion: "1.0",
+                        swVersion: "1.0.1"
+                    },
+                    customData: {
+                        customKey: "customValue"
+                    }
+                }]
+            }
+        });
+    }
+    
 
 // Handle Smart Home QUERY intent
 if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
@@ -126,11 +136,30 @@ if (body.inputs && body.inputs[0].intent === 'action.devices.QUERY') {
                 }
             },
             structuredResponse: {
-                voice: {
+                speech: {
                     text: `The garden moisture level is ${moisture}%. Your plants are ${descriptiveState}.`
                 }
+            },
+            // Optional: Ensures Google Home UI updates with the latest moisture level
+            reportStateAndNotification: {
+                requestId: body.requestId,
+                eventId: new Date().toISOString(),
+                payload: {
+                    devices: {
+                        states: {
+                            garden: {
+                                SensorState: {
+                                    MoistureLevel: {
+                                        currentSensorState: descriptiveState,
+                                        rawValue: moisture
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        };      
+        };
         
         
         console.log("Sending response:", JSON.stringify(response, null, 2));

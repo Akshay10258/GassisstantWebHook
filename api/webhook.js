@@ -99,21 +99,13 @@ app.post("/api/webhook", async (req, res) => {
             else descriptiveState = "dry";
             
 
-            console.log("ide response : ",{
-                requestId: body.requestId,
-                payload: {
-                    devices: {
-                        garden: {
-                            status: "SUCCESS",
-                            online: true,
-                            state: {
-                                "SensorState": {
-                                    "MoistureLevel": {
-                                        "currentSensorState": descriptiveState,
-                                        "rawValue": moisture
-                                    }
-                                }
-                            }
+            console.log("dstate ",descriptiveState)
+            console.log("ide response : ", {
+                state: {
+                    "SensorState": {
+                        "MoistureLevel": {
+                            "currentSensorState": descriptiveState,
+                            "rawValue": moisture
                         }
                     }
                 }

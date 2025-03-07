@@ -8,7 +8,7 @@ app.use(express.urlencoded({ extended: true }));
 // Store OAuth codes (in-memory for testing)
 const authCodes = new Map();
 
-app.get("/", (req, res) => {
+app.get("/api/oauth-authorize", (req, res) => {
     const { client_id, redirect_uri, state } = req.query;
     console.log("OAuth authorize request received:", req.query);
     const authCode = 'auth-' + Math.random().toString(36).substring(2);

@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 // Store tokens (in-memory for testing)
 const tokens = new Map();
 
-app.post("/", (req, res) => {
+app.post("/api/oauth-token", (req, res) => {
     console.log("OAuth token request received:", req.body);
     
     const { code, client_id, client_secret } = req.body;

@@ -109,8 +109,8 @@ app.post("/api/webhook", async (req, res) => {
             const monitorValue = snapshot.val() || { SoilMoisture: 0, Temperature: 0, Humidity: 0 };
 
             const moisture = monitorValue.SoilMoisture || 0;
-            const temperature = monitorValue.Temperature || 0;
-            const humidity = monitorValue.Humidity || 0;
+            const temperature = monitorValue.temp || 0;
+            const humidity = monitorValue.humidity || 0;
 
             console.log("Handling QUERY intent");
             console.log("Monitor values:", monitorValue);
@@ -191,8 +191,8 @@ app.post("/api/webhook", async (req, res) => {
                 const sensorData = snapshot.val() || { SoilMoisture: 0, Temperature: 0, Humidity: 0 };
 
                 const moisture = sensorData.SoilMoisture || 0;
-                const temperature = sensorData.Temperature || 0;
-                const humidity = sensorData.Humidity || 0;
+                const temperature = sensorData.temp || 0;
+                const humidity = sensorData.humidity || 0;
 
                 let message = `The garden conditions are: 
                 Moisture is ${moisture}%. 

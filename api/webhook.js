@@ -40,6 +40,7 @@ app.use((req, res, next) => {
     next();
 });
 
+// Main webhook route (handles Dialogflow and Smart Home)
 app.post("/api/webhook", async (req, res) => {
     const body = req.body;
     console.log("Request Body:", JSON.stringify(body));
@@ -228,3 +229,16 @@ app.post("/api/webhook", async (req, res) => {
     // If it's neither a Smart Home nor a Dialogflow request
     res.json({ error: "Unrecognized request format" });
 });
+
+
+// Test GET endpoint
+app.get("/api/webhook", (req, res) => {
+    res.json({ message: "Webhook API is operational" });
+});
+
+// Test font endpoint
+app.get("/test-font", (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/fonts/Colfax-Medium.woff'));
+});
+
+module.exports = app;

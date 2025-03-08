@@ -154,9 +154,8 @@ app.post("/api/webhook", async (req, res) => {
                         }
                     }
                 },
-                "voice": {
-                    "text": "The garden conditions are as follows:  Moisture level is 35%, which is needs watering.  Temperature is 22°C, which is moderate.  Humidity is 25%, which is low."
-                }
+                // Place the statusMessage directly here, outside of a "voice" object
+                fulfillmentText: statusMessage,
             };
 
             console.log("Sending response:", JSON.stringify(response, null, 2));

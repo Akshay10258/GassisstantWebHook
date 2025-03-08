@@ -154,10 +154,8 @@ app.post("/api/webhook", async (req, res) => {
                         }
                     }
                 },
-                structuredResponse: {
-                    voice: {
-                        text: statusMessage
-                    }
+                "voice": {
+                    "text": "The garden conditions are as follows:  Moisture level is 35%, which is needs watering.  Temperature is 22°C, which is moderate.  Humidity is 25%, which is low."
                 }
             };
 

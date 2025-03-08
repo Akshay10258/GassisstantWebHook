@@ -127,36 +127,67 @@ app.post("/api/webhook", async (req, res) => {
 
             console.log("Status message:", statusMessage);
 
+            // const response = {
+            //     requestId: body.requestId,
+            //     payload: {
+            //         devices: {
+            //             garden: {
+            //                 status: "SUCCESS",
+            //                 online: true,
+            //                 states: {
+            //                     SensorState: {
+            //                         MoistureLevel: {
+            //                             currentSensorState: moistureState,
+            //                             rawValue: moisture
+            //                         },
+            //                         Temperature: {
+            //                             currentSensorState: tempState,
+            //                             rawValue: temperature
+            //                         },
+            //                         Humidity: {
+            //                             currentSensorState: humidityState,
+            //                             rawValue: humidity
+            //                         }
+            //                     },
+            //                     online: true
+            //                 }
+            //             }
+            //         }
+            //     },
+            //     // Place the statusMessage directly here, outside of a "voice" object
+            //     fulfillmentText: statusMessage,
+            // };
+
             const response = {
-                requestId: body.requestId,
-                payload: {
-                    devices: {
-                        garden: {
-                            status: "SUCCESS",
-                            online: true,
-                            states: {
-                                SensorState: {
-                                    MoistureLevel: {
-                                        currentSensorState: moistureState,
-                                        rawValue: moisture
+                
+                    "requestId": "ff36a3cc-ec34-11e6-b1a0-6437dbd0e57a",
+                    "payload": {
+                        "devices": {
+                            "garden": {
+                                "status": "SUCCESS",
+                                "online": true,
+                                "states": {
+                                    "SensorState": {
+                                        "MoistureLevel": {
+                                            "currentSensorState": "well-watered",
+                                            "rawValue": 80
+                                        },
+                                        "Temperature": {
+                                            "currentSensorState": "moderate",
+                                            "rawValue": 25.3
+                                        },
+                                        "Humidity": {
+                                            "currentSensorState": "moderate",
+                                            "rawValue": 43
+                                        }
                                     },
-                                    Temperature: {
-                                        currentSensorState: tempState,
-                                        rawValue: temperature
-                                    },
-                                    Humidity: {
-                                        currentSensorState: humidityState,
-                                        rawValue: humidity
-                                    }
-                                },
-                                online: true
+                                    "online": true
+                                }
                             }
                         }
-                    }
-                },
-                // Place the statusMessage directly here, outside of a "voice" object
-                fulfillmentText: statusMessage,
-            };
+                    },
+                    "fulfillmentText": "Test message."
+            }
 
             console.log("Sending response:", JSON.stringify(response, null, 2));
             return res.json(response);
